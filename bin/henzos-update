@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+HENZOS_PATH="$HOME/.local/share/henzos"
+
+echo "=> Updating henzOS..."
+
+if [[ ! -d "$HENZOS_PATH/.git" ]]; then
+  echo "Error: henzOS not installed at $HENZOS_PATH"
+  exit 1
+fi
+
+git -C "$HENZOS_PATH" pull --ff-only
+
+echo "=> Re-running installer..."
+source "$HENZOS_PATH/install.sh"

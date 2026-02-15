@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+HENZOS_PATH="$HOME/.local/share/henzos"
+HENZOS_CONFIG="$HOME/.config/henzos"
+
+usage() {
+  echo "Usage: henzos-theme-set <theme-name>"
+  echo ""
+  echo "Available themes:"
+  for dir in "$HENZOS_PATH/themes"/*/; do
+    [[ -d "$dir" ]] && echo "  $(basename "$dir")"
+  done
+  exit 1
+}
+
+THEME_NAME="${1:-}"
+if [[ -z "$THEME_NAME" ]]; then
+  usage
+fi
+
+THEME_DIR="$HENZOS_PATH/themes/$THEME_NAME"
+if [[ ! -d "$THEME_DIR" ]]; then
+  echo "Error: theme '$THEME_NAME' not found"
+  usage
+fi
+
+# Update the current theme symlink
+mkdir -p "$HENZOS_CONFIG/current"
+ln -snf "$THEME_DIR" "$HENZOS_CONFIG/current/theme"
+
+echo "=> Theme set to: $THEME_NAME"
+
+# Reload running applications
+echo "=> Reloading..."
+
+# i3
+i3-msg reload >/dev/null 2>&1 || true
+
+# Polybar
+bash "$HOME/.config/polybar/launch.sh" &
+
+# dunst
+killall dunst 2>/dev/null || true
+dunst &
+
+echo "=> Done. Some applications may need to be restarted manually."

@@ -1,0 +1,37 @@
+# henzOS emerald theme for Alacritty
+
+[colors.primary]
+background = "#0b0f10"
+foreground = "#cfd7d6"
+
+[colors.cursor]
+text    = "#0b0f10"
+cursor  = "#2bd9a5"
+
+[colors.vi_mode_cursor]
+text    = "#0b0f10"
+cursor  = "#2bd9a5"
+
+[colors.selection]
+text       = "#0b0f10"
+background = "#2bd9a5"
+
+[colors.normal]
+black   = "#11181a"
+red     = "#d96b5f"
+green   = "#2bd9a5"
+yellow  = "#d9c06b"
+blue    = "#5f9ed9"
+magenta = "#b06bd9"
+cyan    = "#5fd9c0"
+white   = "#cfd7d6"
+
+[colors.bright]
+black   = "#8c9797"
+red     = "#e08a80"
+green   = "#5fe8c1"
+yellow  = "#e8d68a"
+blue    = "#80b5e8"
+magenta = "#c68ae8"
+cyan    = "#80e8d5"
+white   = "#e8eded"

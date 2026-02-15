@@ -1,0 +1,69 @@
+* {
+  bg: #0b0f10ee;
+  bg-alt: #11181ae6;
+  fg: #cfd7d6ff;
+  muted: #8c9797ff;
+  accent: #2bd9a5ff;
+  border: #2bd9a599;
+  background-color: transparent;
+  text-color: @fg;
+}
+
+window {
+  transparency: "real";
+  background-color: @bg;
+  border: 2px;
+  border-color: @border;
+  border-radius: 8px;
+}
+
+mainbox {
+  padding: 10px;
+  background-color: transparent;
+}
+
+inputbar {
+  background-color: @bg-alt;
+  border-radius: 6px;
+  padding: 6px;
+  children: [prompt, entry];
+}
+
+prompt {
+  text-color: @muted;
+  padding: 0 6px 0 2px;
+}
+
+entry {
+  text-color: @fg;
+}
+
+listview {
+  background-color: transparent;
+  spacing: 6px;
+  padding: 6px 0 0;
+}
+
+element {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background-color: transparent;
+}
+
+element-text {
+  text-color: @fg;
+  background-color: transparent;
+}
+
+element-icon {
+  size: 18px;
+  margin: 0 8px 0 0;
+}
+
+element selected {
+  background-color: @accent;
+}
+
+element selected element-text {
+  text-color: #0b0f10ff;
+}

@@ -1,0 +1,19 @@
+[global]
+    font = UDEV Gothic 35NF 10
+    frame_color = "#2bd9a5"
+    separator_color = frame
+
+[urgency_low]
+    background = "#11181a"
+    foreground = "#8c9797"
+    frame_color = "#11181a"
+
+[urgency_normal]
+    background = "#0b0f10"
+    foreground = "#cfd7d6"
+    frame_color = "#2bd9a5"
+
+[urgency_critical]
+    background = "#0b0f10"
+    foreground = "#cfd7d6"
+    frame_color = "#d96b5f"

@@ -1,0 +1,18 @@
+# henzOS emerald theme for Starship prompt
+
+format = """$directory$git_branch$git_status$character"""
+
+[character]
+success_symbol = "[>](bold #2bd9a5)"
+error_symbol = "[>](bold #d96b5f)"
+
+[directory]
+style = "bold #2bd9a5"
+truncation_length = 3
+
+[git_branch]
+style = "bold #8c9797"
+format = "[$symbol$branch]($style) "
+
+[git_status]
+style = "#d9c06b"

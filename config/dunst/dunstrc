@@ -1,0 +1,48 @@
+# henzOS dunst configuration
+# Theme colors are loaded via source at the bottom.
+
+[global]
+    monitor = 0
+    follow = mouse
+    width = 350
+    height = 100
+    origin = top-right
+    offset = 10x40
+    notification_limit = 5
+    progress_bar = true
+    indicate_hidden = yes
+    transparency = 10
+    separator_height = 2
+    padding = 12
+    horizontal_padding = 12
+    frame_width = 2
+    corner_radius = 8
+    sort = yes
+    font = UDEV Gothic 35NF 10
+    markup = full
+    format = "<b>%s</b>\n%b"
+    show_age_threshold = 30
+    icon_position = left
+    max_icon_size = 48
+    mouse_left_click = close_current
+    mouse_middle_click = do_action, close_current
+    mouse_right_click = close_all
+
+# Theme colors
+[urgency_low]
+    background = "#11181a"
+    foreground = "#8c9797"
+    frame_color = "#11181a"
+    timeout = 5
+
+[urgency_normal]
+    background = "#0b0f10"
+    foreground = "#cfd7d6"
+    frame_color = "#2bd9a5"
+    timeout = 10
+
+[urgency_critical]
+    background = "#0b0f10"
+    foreground = "#cfd7d6"
+    frame_color = "#d96b5f"
+    timeout = 0

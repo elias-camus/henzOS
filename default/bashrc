@@ -1,0 +1,45 @@
+# henzOS bashrc
+# This file replaces ~/.bashrc on henzOS systems.
+# Add your own customizations at the bottom.
+
+# If not running interactively, don't do anything
+case $- in
+  *i*) ;;
+    *) return;;
+esac
+
+# --- henzOS defaults (do not edit above this line) ---
+source "$HOME/.local/share/henzos/default/bash/aliases.sh"
+
+# History
+HISTCONTROL=ignoreboth
+HISTSIZE=10000
+HISTFILESIZE=20000
+shopt -s histappend
+
+# Window size
+shopt -s checkwinsize
+
+# Glob
+shopt -s globstar 2>/dev/null
+
+# Bash completion
+if [[ -f /usr/share/bash-completion/bash_completion ]]; then
+  source /usr/share/bash-completion/bash_completion
+fi
+
+# henzOS bin
+export PATH="$HOME/.local/share/henzos/bin:$HOME/.local/bin:$PATH"
+
+# Starship prompt
+if command -v starship &>/dev/null; then
+  export STARSHIP_CONFIG="$HOME/.config/starship.toml"
+  eval "$(starship init bash)"
+fi
+
+# fzf
+if command -v fzf &>/dev/null; then
+  eval "$(fzf --bash 2>/dev/null)" || true
+fi
+
+# --- Your customizations below ---

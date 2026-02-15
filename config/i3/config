@@ -1,0 +1,19 @@
+# henzOS i3 configuration
+# This is the main orchestrator. It sources theme colors, henzOS defaults,
+# and your local overrides in that order.
+#
+# To customize, edit ~/.config/i3/local.conf (not this file).
+
+set $mod Mod4
+
+# 1. Load theme colors ($bg, $bg_alt, $fg, $muted, $accent, $urgent)
+include ~/.config/henzos/current/theme/i3.conf
+
+# 2. Load henzOS defaults
+include ~/.local/share/henzos/default/i3/appearance.conf
+include ~/.local/share/henzos/default/i3/bindings.conf
+include ~/.local/share/henzos/default/i3/autostart.conf
+include ~/.local/share/henzos/default/i3/workspaces.conf
+
+# 3. Load user overrides (edit this file to customize!)
+include ~/.config/i3/local.conf

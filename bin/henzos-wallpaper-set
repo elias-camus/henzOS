@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: henzos-wallpaper-set <path-to-image>"
+  exit 1
+}
+
+IMAGE="${1:-}"
+if [[ -z "$IMAGE" || ! -f "$IMAGE" ]]; then
+  usage
+fi
+
+DEST="$HOME/.local/share/henzos/wallpapers/current"
+
+# Copy to stable location so the path doesn't break
+cp "$IMAGE" "$DEST"
+
+# Apply immediately
+feh --bg-fill "$DEST"
+
+echo "=> Wallpaper set: $IMAGE"

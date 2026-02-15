@@ -1,0 +1,17 @@
+# ISO build artifacts
+iso/work/
+iso/*.iso
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

@@ -1,0 +1,7 @@
+configuration {
+  show-icons: true;
+  font: "UDEV Gothic 35NF 10";
+  terminal: "alacritty";
+}
+
+@theme "~/.config/henzos/current/theme/rofi.rasi"

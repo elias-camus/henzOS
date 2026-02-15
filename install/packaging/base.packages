@@ -1,0 +1,106 @@
+# henzOS base packages
+# One package per line. Lines starting with # are ignored.
+
+# === Window manager & X11 ===
+i3-wm
+xorg
+xinit
+picom
+feh
+xss-lock
+i3lock
+xdotool
+xclip
+xsel
+arandr
+
+# === Bar, launcher, notification ===
+polybar
+rofi
+dunst
+libnotify-bin
+
+# === Terminal ===
+alacritty
+
+# === Editor ===
+neovim
+
+# === Shell ===
+bash-completion
+fzf
+fd-find
+ripgrep
+bat
+eza
+btop
+tmux
+jq
+tree
+
+# === Development ===
+git
+curl
+wget
+unzip
+zip
+build-essential
+pkg-config
+cmake
+python3
+python3-pip
+python3-venv
+
+# === Containers ===
+docker.io
+docker-compose
+
+# === Git TUI ===
+# lazygit is installed via binary (see base.sh)
+
+# === Japanese input ===
+ibus
+ibus-mozc
+
+# === System ===
+network-manager
+pulseaudio-utils
+pavucontrol
+brightnessctl
+udiskie
+upower
+
+# === File manager ===
+thunar
+gvfs
+gvfs-backends
+tumbler
+
+# === Browser ===
+firefox
+
+# === Screenshot & media ===
+maim
+slop
+xdg-utils
+mpv
+imv
+ffmpeg
+
+# === Fonts (base; see also fonts.sh) ===
+fontconfig
+
+# === Login manager ===
+lightdm
+lightdm-gtk-greeter
+
+# === Appearance ===
+lxappearance
+dex
+papirus-icon-theme
+
+# === Misc ===
+software-properties-common
+apt-transport-https
+ca-certificates
+gnupg
