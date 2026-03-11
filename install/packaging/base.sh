@@ -21,8 +21,21 @@ fi
 if ! command -v lazygit &>/dev/null; then
   henzos_log "Installing lazygit..."
   LAZYGIT_VERSION=$(curl -s https://api.github.com/repos/jesseduffield/lazygit/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+  LAZYGIT_ARCH=$(uname -m)
+  case "$LAZYGIT_ARCH" in
+    x86_64)
+      LAZYGIT_ARCH="x86_64"
+      ;;
+    aarch64 | arm64)
+      LAZYGIT_ARCH="arm64"
+      ;;
+    *)
+      henzos_error "Unsupported architecture for lazygit: $LAZYGIT_ARCH"
+      exit 1
+      ;;
+  esac
   TMPDIR=$(mktemp -d)
-  curl -sL "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz" \
+  curl -sL "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_${LAZYGIT_ARCH}.tar.gz" \
     | tar xz -C "$TMPDIR"
   sudo install "$TMPDIR/lazygit" /usr/local/bin/lazygit
   rm -rf "$TMPDIR"
