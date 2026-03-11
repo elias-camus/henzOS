@@ -160,3 +160,23 @@ ISO は Ubuntu のライブ環境に henzOS のファイル一式を同梱し、
 - [ ] マルチモニター対応の改善 (arandr 連携 or 自動検出)
 - [ ] Flatpak / Snap 対応の検討
 - [ ] コミュニティテーマの投稿・共有の仕組み
+
+---
+
+## 拡張ロードマップ（メモ）
+
+### コンテンツ
+- [ ] デフォルト壁紙 — emeraldテーマに合ったダーク系を `themes/emerald/backgrounds/` に追加
+- [ ] LightDMブランディング — ロゴ・背景色のカスタマイズ
+- [ ] 追加テーマ — catppuccin, nord, gruvbox
+
+### 機能
+- [ ] マルチモニター対応 — arandrを使った自動検出スクリプト
+- [ ] GPU ドライバ自動検出 — NVIDIA/AMD を install 時に判定してドライバを入れる
+- [ ] `henzos-doctor` コマンド — インストール後の自己診断ツール（dotfile/symlink/依存関係チェック）
+- [ ] Flatpak対応 — Discord等の非公式リポジトリアプリ用
+
+### 配布
+- [ ] `henzos.dev` ランディングページ — curl | bash の配布元
+- [ ] shellcheck CI — GitHub ActionsでShellScriptの静的解析
+- [ ] ISO自動ビルド CI/CD — GitHub Actionsでリリース時にISO生成・アップロード
