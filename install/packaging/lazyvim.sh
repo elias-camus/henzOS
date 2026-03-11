@@ -1,9 +1,10 @@
 # Set up LazyVim for Neovim
 
 NVIM_CONFIG="$HOME/.config/nvim"
+NVIM_MANAGED_FLAG="$HENZOS_CONFIG/state/lazyvim-managed"
 
-if [[ -d "$NVIM_CONFIG/.git" ]]; then
-  henzos_log "Neovim config already exists, skipping LazyVim bootstrap"
+if [[ -f "$NVIM_MANAGED_FLAG" && -d "$NVIM_CONFIG" ]]; then
+  henzos_log "henzOS-managed Neovim config already exists, skipping bootstrap"
 else
   henzos_log "Setting up LazyVim..."
 
@@ -14,6 +15,8 @@ else
 
   # Deploy henzOS nvim config (LazyVim starter with henzOS customizations)
   cp -R "$HENZOS_PATH/config/nvim" "$NVIM_CONFIG"
+  mkdir -p "$(dirname "$NVIM_MANAGED_FLAG")"
+  : > "$NVIM_MANAGED_FLAG"
 
   # First launch to install plugins (headless)
   henzos_log "Installing Neovim plugins (headless)..."

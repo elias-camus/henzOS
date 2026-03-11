@@ -3,6 +3,7 @@ set -euo pipefail
 
 HENZOS_PATH="$HOME/.local/share/henzos"
 HENZOS_CONFIG="$HOME/.config/henzos"
+source "$HENZOS_PATH/install/helpers/theme.sh"
 
 usage() {
   echo "Usage: henzos-theme-set <theme-name>"
@@ -25,9 +26,7 @@ if [[ ! -d "$THEME_DIR" ]]; then
   usage
 fi
 
-# Update the current theme symlink
-mkdir -p "$HENZOS_CONFIG/current"
-ln -snf "$THEME_DIR" "$HENZOS_CONFIG/current/theme"
+henzos_apply_theme_assets "$THEME_DIR"
 
 echo "=> Theme set to: $THEME_NAME"
 

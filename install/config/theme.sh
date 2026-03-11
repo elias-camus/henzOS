@@ -12,13 +12,8 @@ if [[ ! -d "$THEME_DIR" ]]; then
 fi
 
 # Create the current theme symlink
-mkdir -p "$HENZOS_CONFIG"
-ln -snf "$THEME_DIR" "$CURRENT_LINK/theme"
-
-# Link theme-specific configs that need to live in specific paths
-# dunst reads from ~/.config/dunst/dunstrc — merge theme colors
-# Rofi theme is referenced via @theme in config.rasi — no symlink needed
-# Alacritty theme is imported via the config — no symlink needed
+mkdir -p "$CURRENT_LINK"
+henzos_apply_theme_assets "$THEME_DIR"
 
 henzos_ok "Theme: $THEME_NAME"
 
