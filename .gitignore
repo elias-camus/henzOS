@@ -1,6 +1,10 @@
 # ISO build artifacts
 iso/work/
 iso/*.iso
+/iso/*.iso
+/iso/chroot/
+/iso/binary/
+/iso/.build/
 
 # Logs
 *.log

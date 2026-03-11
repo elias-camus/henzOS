@@ -4,7 +4,7 @@ set -euo pipefail
 # henzOS - Beautiful, opinionated Ubuntu desktop
 # Usage: curl -sL henzos.dev/install | bash
 
-HENZOS_REPO="https://github.com/YOUR_USER/henzos.git"
+HENZOS_REPO="https://github.com/elias-camus/henzOS.git"
 HENZOS_BRANCH="${HENZOS_BRANCH:-main}"
 HENZOS_PATH="$HOME/.local/share/henzos"
 
