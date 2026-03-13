@@ -33,10 +33,15 @@ lb config \
   --linux-flavours "generic" \
   --binary-images iso
 
-# Force grub-efi only (disable syslinux which needs unavailable theme packages)
+# Force grub-efi only (disable syslinux which needs unavailable theme packages on 24.04)
+# Override the LB_BOOTLOADERS variable in config/binary
 sed -i 's/^LB_BOOTLOADERS=.*/LB_BOOTLOADERS="grub-efi"/' config/binary
-if ! grep -q '^LB_BOOTLOADERS=' config/binary 2>/dev/null; then
-  echo 'LB_BOOTLOADERS="grub-efi"' >> config/binary
+# Also patch the syslinux binary script to no-op since live-build ignores LB_BOOTLOADERS for syslinux
+SYSLINUX_SCRIPT="$(which lb_binary_syslinux 2>/dev/null || echo /usr/lib/live/build/binary_syslinux)"
+if [ -f "$SYSLINUX_SCRIPT" ]; then
+  cp "$SYSLINUX_SCRIPT" "${SYSLINUX_SCRIPT}.bak"
+  echo '#!/bin/sh' > "$SYSLINUX_SCRIPT"
+  echo 'exit 0' >> "$SYSLINUX_SCRIPT"
 fi
 
 # --- Package list ---
