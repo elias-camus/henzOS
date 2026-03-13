@@ -33,13 +33,39 @@ lb config \
   --linux-flavours "generic" \
   --binary-images iso
 
-# Force grub-efi only (disable syslinux which needs unavailable theme packages on 24.04)
-# Find and patch ALL syslinux-related live-build scripts to no-op
-for f in $(find /usr/lib/live /usr/share/live -name '*syslinux*' -type f 2>/dev/null); do
-  echo "=> Patching $f to no-op"
-  cp "$f" "${f}.bak"
-  printf '#!/bin/sh\nexit 0\n' > "$f"
+# Patch lb_binary_syslinux to create a minimal isolinux dir without needing
+# syslinux-themes-ubuntu-oneiric or gfxboot-theme-ubuntu (removed in 24.04).
+# The script is replaced with one that sets up a bare-minimum isolinux config
+# so that genisoimage can find the boot catalog directory.
+LB_SYSLINUX="/usr/lib/live/build/lb_binary_syslinux"
+if [ -f "$LB_SYSLINUX" ]; then
+  cp "$LB_SYSLINUX" "${LB_SYSLINUX}.bak"
+  cat > "$LB_SYSLINUX" << 'SYSEOF'
+#!/bin/sh
+set -e
+# Minimal syslinux/isolinux setup for live-build on Ubuntu 24.04
+# (replaces the default script that requires removed theme packages)
+apt-get install -y -qq syslinux syslinux-common isolinux 2>/dev/null || true
+
+ISOLINUX_DIR="binary/isolinux"
+mkdir -p "$ISOLINUX_DIR"
+
+# Copy isolinux binary
+for f in /usr/lib/ISOLINUX/isolinux.bin /usr/lib/syslinux/modules/bios/ldlinux.c32; do
+  [ -f "$f" ] && cp "$f" "$ISOLINUX_DIR/"
 done
+
+# Minimal config
+cat > "$ISOLINUX_DIR/isolinux.cfg" << 'CFG'
+DEFAULT live
+LABEL live
+  KERNEL /casper/vmlinuz
+  INITRD /casper/initrd
+  APPEND boot=casper quiet splash ---
+CFG
+SYSEOF
+  chmod +x "$LB_SYSLINUX"
+fi
 
 # --- Package list ---
 mkdir -p config/package-lists
