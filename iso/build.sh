@@ -31,7 +31,8 @@ lb config \
   --iso-application "henzOS" \
   --iso-volume "henzOS" \
   --linux-flavours "generic" \
-  $(if [ "$ARCH" = "amd64" ]; then echo "--binary-images iso-hybrid"; else echo "--binary-images iso --bootloaders grub-efi"; fi)
+  --binary-images iso \
+  --bootloaders grub-efi
 
 # --- Package list ---
 mkdir -p config/package-lists
@@ -73,7 +74,18 @@ software-properties-common ca-certificates gnupg
 
 # Live environment
 casper
+
+# Boot (architecture-specific packages added dynamically below)
 PKGEOF
+
+# --- Architecture-specific boot packages ---
+if [ "$ARCH" = "amd64" ]; then
+  echo "grub-efi-amd64-signed grub-pc-bin shim-signed" \
+    >> config/package-lists/henzos.list.chroot
+else
+  echo "grub-efi-arm64 shim-signed" \
+    >> config/package-lists/henzos.list.chroot
+fi
 
 # --- Include henzOS files in the live filesystem ---
 # These go into /etc/skel so every user (including the live user) gets them
@@ -198,7 +210,7 @@ echo "=> Running lb build (this requires root)..."
 lb build
 
 # Move output
-OUTPUT=$(ls "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/binary.iso 2>/dev/null | head -1)
+OUTPUT=$(ls "$WORK_DIR"/binary.iso "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/*.iso 2>/dev/null | head -1)
 if [[ -n "$OUTPUT" ]]; then
   mv "$OUTPUT" "$ISO_DIR/henzos-${ARCH}-$(date +%Y%m%d).iso"
   echo ""
