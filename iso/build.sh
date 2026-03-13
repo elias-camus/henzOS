@@ -31,8 +31,7 @@ lb config \
   --iso-application "henzOS" \
   --iso-volume "henzOS" \
   --linux-flavours "generic" \
-  --binary-images iso \
-  --bootloaders grub-efi
+  --binary-images iso
 
 # --- Package list ---
 mkdir -p config/package-lists
