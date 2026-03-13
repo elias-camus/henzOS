@@ -31,7 +31,8 @@ lb config \
   --iso-application "henzOS" \
   --iso-volume "henzOS" \
   --linux-flavours "generic" \
-  --binary-images iso
+  --binary-images iso \
+  --source false
 
 # Patch lb_binary_syslinux to create a minimal isolinux dir without needing
 # syslinux-themes-ubuntu-oneiric or gfxboot-theme-ubuntu (removed in 24.04).
@@ -240,9 +241,6 @@ chmod +x config/hooks/live/02-fonts.hook.chroot
 
 # --- Build ---
 echo "=> Running lb build (this requires root)..."
-# Disable source package generation (lb_source fails and is not needed for ISO)
-sed -i 's/^LB_SOURCE=.*/LB_SOURCE="false"/' config/source 2>/dev/null || true
-echo 'LB_SOURCE="false"' >> config/common 2>/dev/null || true
 lb build
 
 # Move output
