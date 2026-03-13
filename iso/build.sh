@@ -33,6 +33,12 @@ lb config \
   --linux-flavours "generic" \
   --binary-images iso
 
+# Force grub-efi only (disable syslinux which needs unavailable theme packages)
+sed -i 's/^LB_BOOTLOADERS=.*/LB_BOOTLOADERS="grub-efi"/' config/binary
+if ! grep -q '^LB_BOOTLOADERS=' config/binary 2>/dev/null; then
+  echo 'LB_BOOTLOADERS="grub-efi"' >> config/binary
+fi
+
 # --- Package list ---
 mkdir -p config/package-lists
 cat > config/package-lists/henzos.list.chroot << 'PKGEOF'
