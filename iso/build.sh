@@ -240,6 +240,9 @@ chmod +x config/hooks/live/02-fonts.hook.chroot
 
 # --- Build ---
 echo "=> Running lb build (this requires root)..."
+# Disable source package generation (lb_source fails and is not needed for ISO)
+sed -i 's/^LB_SOURCE=.*/LB_SOURCE="false"/' config/source 2>/dev/null || true
+echo 'LB_SOURCE="false"' >> config/common 2>/dev/null || true
 lb build
 
 # Move output
