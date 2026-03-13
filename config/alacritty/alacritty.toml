@@ -1,7 +1,6 @@
 # henzOS Alacritty configuration
 # Theme colors are loaded from the active henzOS theme.
 
-[general]
 import = [
   "~/.config/henzos/current/theme/alacritty.toml"
 ]

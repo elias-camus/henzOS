@@ -1,0 +1,43 @@
+name: Build henzOS ISO
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install live-build
+        run: sudo apt-get update && sudo apt-get install -y live-build rsync
+
+      - name: Build ISO
+        run: cd iso && sudo bash build.sh
+
+      - name: Find ISO
+        id: iso
+        run: |
+          ISO_PATH=$(find iso/ -maxdepth 1 -name '*.iso' | head -1)
+          echo "path=$ISO_PATH" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$ISO_PATH")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: henzos-iso
+          path: ${{ steps.iso.outputs.path }}
+          retention-days: 7
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.iso.outputs.path }}
+          generate_release_notes: true

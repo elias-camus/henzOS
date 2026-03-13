@@ -6,8 +6,8 @@ fi
 
 henzos_log "Configuring Git..."
 
-# Only prompt if git user.name is not already set
-if [[ -z "$(git config --global user.name 2>/dev/null)" ]]; then
+# Only prompt if git user.name is not already set and we have a TTY
+if [[ -z "$(git config --global user.name 2>/dev/null)" ]] && [[ -t 0 ]]; then
   echo ""
   read -rp "   Git user.name: " git_name
   read -rp "   Git user.email: " git_email

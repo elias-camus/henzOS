@@ -13,8 +13,9 @@ set -euo pipefail
 ISO_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORK_DIR="$ISO_DIR/work"
 HENZOS_ROOT="$(dirname "$ISO_DIR")"
+ARCH="$(dpkg --print-architecture)"  # amd64 or arm64
 
-echo "=> Building henzOS ISO..."
+echo "=> Building henzOS ISO (${ARCH})..."
 
 rm -rf "$WORK_DIR"
 mkdir -p "$WORK_DIR"
@@ -24,13 +25,13 @@ cd "$WORK_DIR"
 lb config \
   --distribution noble \
   --archive-areas "main restricted universe multiverse" \
-  --architectures amd64 \
-  --binary-images iso-hybrid \
+  --architectures "$ARCH" \
   --bootappend-live "boot=casper quiet splash" \
-  --debian-installer none \
-  --image-name "henzos" \
+  --debian-installer false \
   --iso-application "henzOS" \
-  --iso-volume "henzOS"
+  --iso-volume "henzOS" \
+  --linux-flavours "generic" \
+  $(if [ "$ARCH" = "amd64" ]; then echo "--binary-images iso-hybrid"; else echo "--binary-images iso --bootloaders grub-efi"; fi)
 
 # --- Package list ---
 mkdir -p config/package-lists
@@ -69,17 +70,53 @@ fonts-noto fonts-noto-cjk fonts-noto-color-emoji
 
 # Tools
 software-properties-common ca-certificates gnupg
+
+# Live environment
+casper
 PKGEOF
 
-# --- Hook: install henzOS on first boot ---
-mkdir -p config/includes.chroot/etc/skel/.local/share
-cp -R "$HENZOS_ROOT" config/includes.chroot/etc/skel/.local/share/henzos
+# --- Include henzOS files in the live filesystem ---
+# These go into /etc/skel so every user (including the live user) gets them
+SKEL="config/includes.chroot/etc/skel"
+mkdir -p "$SKEL/.local/share"
 
+# Copy henzOS repo (excluding .git, iso/work to save space)
+rsync -a --exclude='.git' --exclude='iso/work' "$HENZOS_ROOT/" "$SKEL/.local/share/henzos/"
+
+# --- Pre-deploy dotfiles and theme into skel ---
+# This means the live environment boots with everything already configured,
+# no need to run install.sh on first login.
+
+# Deploy config files
+mkdir -p "$SKEL/.config"
+cp -R "$HENZOS_ROOT/config/"* "$SKEL/.config/"
+
+# Set up theme symlink (emerald as default)
+mkdir -p "$SKEL/.config/henzos/current"
+# Can't use symlinks in skel easily, so we copy the theme
+cp -R "$HENZOS_ROOT/themes/emerald" "$SKEL/.config/henzos/current/theme"
+
+# Version marker
+echo "1.0.0" > "$SKEL/.config/henzos/version"
+
+# Starship config
+cp "$HENZOS_ROOT/config/starship.toml" "$SKEL/.config/starship.toml"
+
+# Bashrc
+mkdir -p "$SKEL/.config/henzos"
+cp "$HENZOS_ROOT/default/bashrc" "$SKEL/.bashrc"
+
+# --- Chroot hook: system-level configuration ---
 mkdir -p config/hooks/live
 cat > config/hooks/live/01-henzos.hook.chroot << 'HOOKEOF'
 #!/bin/bash
+set -e
+
 # Enable LightDM
 systemctl enable lightdm
+
+# Disable cloud-init (not needed for desktop)
+touch /etc/cloud/cloud-init.disabled
 
 # Create i3 session file
 mkdir -p /usr/share/xsessions
@@ -91,25 +128,83 @@ Exec=i3
 TryExec=i3
 Type=Application
 XEOF
+
+# Install Starship prompt system-wide
+curl -sS https://starship.rs/install.sh | sh -s -- -y
+
+# Install lazygit
+LAZYGIT_ARCH=$(dpkg --print-architecture)
+case "$LAZYGIT_ARCH" in
+  amd64) LAZYGIT_ARCH="x86_64" ;;
+  arm64) LAZYGIT_ARCH="arm64" ;;
+esac
+LAZYGIT_VERSION=$(curl -s https://api.github.com/repos/jesseduffield/lazygit/releases/latest | grep '"tag_name"' | sed 's/.*"v//;s/".*//')
+curl -sL "https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_${LAZYGIT_ARCH}.tar.gz" \
+  | tar xz -C /usr/local/bin lazygit
+
+# Install GitHub CLI
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+  | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+  > /etc/apt/sources.list.d/github-cli.list
+apt-get update -qq
+apt-get install -y -qq gh
+
+# Set default session to i3 for LightDM
+mkdir -p /etc/lightdm/lightdm.conf.d
+cat > /etc/lightdm/lightdm.conf.d/50-henzos.conf << LDMEOF
+[Seat:*]
+user-session=i3
+LDMEOF
+
+# Git defaults
+git config --system init.defaultBranch main
+git config --system pull.rebase true
+git config --system push.autoSetupRemote true
 HOOKEOF
 chmod +x config/hooks/live/01-henzos.hook.chroot
 
-# --- Auto-setup script for first login ---
-mkdir -p config/includes.chroot/etc/skel/.config/autostart
-cat > config/includes.chroot/etc/skel/.config/autostart/henzos-setup.desktop << 'AUTOEOF'
-[Desktop Entry]
-Type=Application
-Name=henzOS Setup
-Exec=bash -c 'if [ ! -f ~/.config/henzos/version ]; then alacritty -e bash -c "source ~/.local/share/henzos/install.sh"; fi'
-X-GNOME-Autostart-enabled=true
-AUTOEOF
+# --- Font installation hook (separate, runs in chroot) ---
+cat > config/hooks/live/02-fonts.hook.chroot << 'HOOKEOF'
+#!/bin/bash
+set -e
+
+FONT_BASE="/usr/share/fonts/truetype/henzos"
+mkdir -p "$FONT_BASE"
+
+# UDEV Gothic NF
+UDEV_VERSION=$(curl -s https://api.github.com/repos/yuru7/udev-gothic/releases/latest | grep '"tag_name"' | sed 's/.*"//;s/".*//')
+TMPDIR=$(mktemp -d)
+curl -sL "https://github.com/yuru7/udev-gothic/releases/download/${UDEV_VERSION}/UDEVGothic_NF_${UDEV_VERSION}.zip" \
+  -o "$TMPDIR/udev.zip"
+unzip -qo "$TMPDIR/udev.zip" -d "$TMPDIR"
+find "$TMPDIR" -name "*.ttf" -exec cp {} "$FONT_BASE/" \;
+rm -rf "$TMPDIR"
+
+# JetBrains Mono Nerd Font
+TMPDIR=$(mktemp -d)
+curl -sL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip" \
+  -o "$TMPDIR/jb.zip"
+unzip -qo "$TMPDIR/jb.zip" -d "$TMPDIR"
+find "$TMPDIR" -name "*.ttf" -exec cp {} "$FONT_BASE/" \;
+rm -rf "$TMPDIR"
+
+fc-cache -f
+HOOKEOF
+chmod +x config/hooks/live/02-fonts.hook.chroot
 
 # --- Build ---
 echo "=> Running lb build (this requires root)..."
 lb build
 
 # Move output
-mv "$WORK_DIR/henzos-amd64.hybrid.iso" "$ISO_DIR/henzos-$(date +%Y%m%d).iso" 2>/dev/null || true
-
-echo ""
-echo "=> ISO built: $ISO_DIR/henzos-$(date +%Y%m%d).iso"
+OUTPUT=$(ls "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/binary.iso 2>/dev/null | head -1)
+if [[ -n "$OUTPUT" ]]; then
+  mv "$OUTPUT" "$ISO_DIR/henzos-${ARCH}-$(date +%Y%m%d).iso"
+  echo ""
+  echo "=> ISO built: $ISO_DIR/henzos-${ARCH}-$(date +%Y%m%d).iso"
+else
+  echo ""
+  echo "=> ERROR: ISO not found. Check build logs in $WORK_DIR"
+  exit 1
+fi

@@ -57,7 +57,7 @@ fi
 # Starship prompt
 if ! command -v starship &>/dev/null; then
   henzos_log "Installing Starship prompt..."
-  curl -sS https://starship.rs/install.sh | sh -s -- -y >> "$HENZOS_LOG" 2>&1
+  curl -sS https://starship.rs/install.sh | sudo sh -s -- -y >> "$HENZOS_LOG" 2>&1
   henzos_ok "Starship"
 fi
 

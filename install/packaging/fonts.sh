@@ -12,15 +12,15 @@ FONT_BASE="$HOME/.local/share/fonts"
 mkdir -p "$FONT_BASE"
 
 # UDEV Gothic 35NF (primary monospace font)
-if [[ ! -d "$FONT_BASE/UDEVGothic35NF" ]]; then
-  henzos_log "Installing UDEV Gothic 35NF..."
-  UDEV_VERSION="v2.0.0"
+if [[ ! -d "$FONT_BASE/UDEVGothicNF" ]]; then
+  henzos_log "Installing UDEV Gothic NF..."
+  UDEV_VERSION=$(curl -s https://api.github.com/repos/yuru7/udev-gothic/releases/latest | jq -r '.tag_name')
   TMPDIR=$(mktemp -d)
-  curl -sL "https://github.com/yuru7/udev-gothic/releases/download/${UDEV_VERSION}/UDEVGothic35NF_${UDEV_VERSION}.zip" \
+  curl -sL "https://github.com/yuru7/udev-gothic/releases/download/${UDEV_VERSION}/UDEVGothic_NF_${UDEV_VERSION}.zip" \
     -o "$TMPDIR/udev.zip"
   unzip -qo "$TMPDIR/udev.zip" -d "$TMPDIR"
-  mkdir -p "$FONT_BASE/UDEVGothic35NF"
-  find "$TMPDIR" -name "*.ttf" -exec cp {} "$FONT_BASE/UDEVGothic35NF/" \;
+  mkdir -p "$FONT_BASE/UDEVGothicNF"
+  find "$TMPDIR" -name "*.ttf" -exec cp {} "$FONT_BASE/UDEVGothicNF/" \;
   rm -rf "$TMPDIR"
 fi
 
