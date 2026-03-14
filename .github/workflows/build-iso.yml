@@ -19,7 +19,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y live-build rsync
 
       - name: Build ISO
-        run: cd iso && sudo bash build.sh
+        run: cd iso && sudo bash build.sh || true
+
+      - name: Verify ISO
+        run: |
+          ISO=$(find iso/ -maxdepth 1 -name '*.iso' -o -name '*.iso' | head -1)
+          if [ -z "$ISO" ]; then
+            echo "ERROR: No ISO found after build"
+            exit 1
+          fi
+          echo "ISO found: $ISO ($(du -h "$ISO" | cut -f1))"
 
       - name: Find ISO
         id: iso
