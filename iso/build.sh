@@ -240,10 +240,27 @@ HOOKEOF
 chmod +x config/hooks/live/02-fonts.hook.chroot
 
 # Patch lb_source to no-op (it fails on Ubuntu 24.04 and cleans up binary.iso)
-LB_SOURCE="/usr/lib/live/build/lb_source"
-if [ -f "$LB_SOURCE" ]; then
-  cp "$LB_SOURCE" "${LB_SOURCE}.bak"
-  printf '#!/bin/sh\nexit 0\n' > "$LB_SOURCE"
+# Find the actual script path
+echo "=> Searching for lb_source scripts..."
+find /usr/lib/live /usr/share/live /usr/bin -name '*source*' -type f 2>/dev/null || true
+for f in /usr/lib/live/build/lb_source /usr/lib/live/build/source /usr/lib/live/build/binary_source; do
+  if [ -f "$f" ]; then
+    echo "=> Patching $f to no-op"
+    cp "$f" "${f}.bak"
+    printf '#!/bin/sh\nexit 0\n' > "$f"
+  fi
+done
+# Also try the lb wrapper approach
+LB_BIN=$(which lb 2>/dev/null || echo "")
+if [ -n "$LB_BIN" ]; then
+  LB_DIR=$(dirname "$(readlink -f "$LB_BIN")")
+  for f in "$LB_DIR"/../lib/live/build/*source*; do
+    if [ -f "$f" ]; then
+      echo "=> Patching $f to no-op"
+      cp "$f" "${f}.bak"
+      printf '#!/bin/sh\nexit 0\n' > "$f"
+    fi
+  done
 fi
 
 # --- Build ---
