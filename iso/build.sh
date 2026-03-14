@@ -241,9 +241,12 @@ chmod +x config/hooks/live/02-fonts.hook.chroot
 
 # --- Build ---
 echo "=> Running lb build (this requires root)..."
-# lb_source may exit 2 even with --source false; run in subshell to catch it
-LB_EXIT=0
-(lb build) || LB_EXIT=$?
+# lb_source exits 2 even with --source false on Ubuntu 24.04.
+# Temporarily disable errexit so we can check if ISO was generated.
+set +e
+lb build
+LB_EXIT=$?
+set -e
 if [ $LB_EXIT -ne 0 ]; then
   # Check if ISO was actually created despite the error
   if ls "$WORK_DIR"/binary.iso "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/*.iso 2>/dev/null | head -1 | grep -q .; then

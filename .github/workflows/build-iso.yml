@@ -19,6 +19,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y live-build rsync
 
       - name: Build ISO
+        shell: bash --noprofile --norc {0}
         run: cd iso && sudo bash build.sh
 
       - name: Find ISO
