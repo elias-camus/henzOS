@@ -106,16 +106,36 @@ i3 config を例にした読み込み順:
 
 ## ISO ビルド
 
-Ubuntu 24.04 LTS ベースの ISO を live-build で生成する。
+Ubuntu 24.04 LTS ベースの ISO を live-build で生成する。ビルドは GitHub Actions (x86_64) で自動化されている。
+
+### GitHub Actions（推奨）
+
+**手動ビルド（テスト用）:**
+```bash
+gh workflow run "Build henzOS ISO"
+```
+完成した ISO は GitHub Actions の Artifacts から 7 日間ダウンロード可能。
+
+**リリースビルド:**
+```bash
+git tag v1.x.x && git push --tags
+```
+自動で ISO をビルドし GitHub Release に添付される。
+
+### ローカルビルド（x86_64 Linux のみ）
 
 ```bash
-sudo apt-get install live-build
+sudo apt-get install live-build rsync
 cd iso/ && sudo bash build.sh
 ```
 
-出力: `iso/henzos-YYYYMMDD.iso`
+出力: `iso/henzos-amd64-YYYYMMDD.iso`
 
-ISO は Ubuntu のライブ環境に henzOS のファイル一式を同梱し、初回ログイン時に `install.sh` が自動実行される構成。
+### ISO の構成
+
+- Ubuntu 24.04 LTS ライブ環境に henzOS の dotfile・テーマ・設定を `/etc/skel` に同梱
+- 起動直後から i3wm + LightDM が設定済みの状態で動作
+- 約 2.3 GB、ビルド時間は約 11 分
 
 ---
 
@@ -123,27 +143,23 @@ ISO は Ubuntu のライブ環境に henzOS のファイル一式を同梱し、
 
 ### フェーズ 1 — 動作検証
 
-- [ ] VM (Ubuntu 24.04 LTS) で `source install.sh` を通しで実行、エラーを潰す
-- [ ] 各 dotfile が正しいパスに配置されているか確認
-- [ ] テーマ symlink が正しく機能するか確認 (`henzos-theme-set emerald`)
-- [ ] i3 の `include` が3層すべて正しく読み込めているか確認
-- [ ] Polybar, Rofi, dunst, Alacritty のテーマカラーが統一されているか目視確認
-- [ ] LazyVim のヘッドレスプラグインインストールが正常に完了するか確認
+- [x] VM (Ubuntu 24.04 LTS) で `source install.sh` を通しで実行
+- [x] 各 dotfile が正しいパスに配置されているか確認
+- [x] テーマ・i3wm・Polybar・Alacritty・LightDM の動作確認
 - [ ] `henzos-update` で再実行しても冪等に動くか確認（2回目で壊れないか）
 
-### フェーズ 2 — コンテンツ
+### フェーズ 2 — ISO 検証
+
+- [x] GitHub Actions で x86_64 ISO の自動ビルド CI/CD を構築
+- [x] ISO ビルド成功（2.3 GB、約 11 分）
+- [ ] **ISO からブートして LightDM・i3wm が正常に起動するか確認** ← 次のステップ
+- [ ] ライブ環境で各アプリが動作するか確認
+
+### フェーズ 3 — コンテンツ
 
 - [ ] デフォルト壁紙を `themes/emerald/backgrounds/` に追加
 - [ ] LightDM greeter のブランディング（ロゴ、背景色）
-- [ ] Plymouth ブートスプラッシュテーマ（任意）
 - [ ] テーマ追加: catppuccin, nord, gruvbox 等
-
-### フェーズ 3 — ISO
-
-- [ ] `iso/build.sh` を実行して ISO が正常に生成されるか確認
-- [ ] ISO からブートして初回セットアップが走るか確認
-- [ ] GitHub Actions で ISO 自動ビルドの CI/CD を構築
-- [ ] リリースページに ISO を自動アップロード
 
 ### フェーズ 4 — 配布・ブランディング
 
@@ -155,28 +171,8 @@ ISO は Ubuntu のライブ環境に henzOS のファイル一式を同梱し、
 
 ### フェーズ 5 — 発展
 
-- [ ] マイグレーションシステムの実テスト（バージョンアップ時の設定変更）
 - [ ] NVIDIA / AMD GPU ドライバの自動検出・インストール
 - [ ] マルチモニター対応の改善 (arandr 連携 or 自動検出)
-- [ ] Flatpak / Snap 対応の検討
-- [ ] コミュニティテーマの投稿・共有の仕組み
-
----
-
-## 拡張ロードマップ（メモ）
-
-### コンテンツ
-- [ ] デフォルト壁紙 — emeraldテーマに合ったダーク系を `themes/emerald/backgrounds/` に追加
-- [ ] LightDMブランディング — ロゴ・背景色のカスタマイズ
-- [ ] 追加テーマ — catppuccin, nord, gruvbox
-
-### 機能
-- [ ] マルチモニター対応 — arandrを使った自動検出スクリプト
-- [ ] GPU ドライバ自動検出 — NVIDIA/AMD を install 時に判定してドライバを入れる
-- [ ] `henzos-doctor` コマンド — インストール後の自己診断ツール（dotfile/symlink/依存関係チェック）
-- [ ] Flatpak対応 — Discord等の非公式リポジトリアプリ用
-
-### 配布
-- [ ] `henzos.dev` ランディングページ — curl | bash の配布元
-- [ ] shellcheck CI — GitHub ActionsでShellScriptの静的解析
-- [ ] ISO自動ビルド CI/CD — GitHub Actionsでリリース時にISO生成・アップロード
+- [ ] `henzos-doctor` コマンド — インストール後の自己診断ツール
+- [ ] Flatpak 対応
+- [ ] shellcheck CI — GitHub Actions で ShellScript の静的解析
