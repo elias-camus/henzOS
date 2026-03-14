@@ -239,36 +239,32 @@ fc-cache -f
 HOOKEOF
 chmod +x config/hooks/live/02-fonts.hook.chroot
 
-# Patch lb_source to no-op (it fails on Ubuntu 24.04 and cleans up binary.iso)
-# Find the actual script path
-echo "=> Searching for lb_source scripts..."
-find /usr/lib/live /usr/share/live /usr/bin -name '*source*' -type f 2>/dev/null || true
-for f in /usr/lib/live/build/lb_source /usr/lib/live/build/source /usr/lib/live/build/binary_source; do
+# Patch lb_source and related scripts to no-op (lb_source fails on Ubuntu 24.04)
+for f in /usr/lib/live/build/lb_source*; do
   if [ -f "$f" ]; then
     echo "=> Patching $f to no-op"
-    cp "$f" "${f}.bak"
     printf '#!/bin/sh\nexit 0\n' > "$f"
   fi
 done
-# Also try the lb wrapper approach
-LB_BIN=$(which lb 2>/dev/null || echo "")
-if [ -n "$LB_BIN" ]; then
-  LB_DIR=$(dirname "$(readlink -f "$LB_BIN")")
-  for f in "$LB_DIR"/../lib/live/build/*source*; do
-    if [ -f "$f" ]; then
-      echo "=> Patching $f to no-op"
-      cp "$f" "${f}.bak"
-      printf '#!/bin/sh\nexit 0\n' > "$f"
-    fi
-  done
+
+# Also add a binary hook that copies the ISO to a safe location before lb_source runs
+mkdir -p config/hooks/live
+cat > config/hooks/live/99-save-iso.hook.binary << 'HOOKEOF'
+#!/bin/sh
+# Save the ISO before lb_source potentially cleans it up
+if [ -f binary.iso ]; then
+  cp binary.iso /tmp/henzos-saved.iso
+  echo "=> Saved binary.iso to /tmp/henzos-saved.iso"
 fi
+HOOKEOF
+chmod +x config/hooks/live/99-save-iso.hook.binary
 
 # --- Build ---
 echo "=> Running lb build (this requires root)..."
-lb build
+lb build || true
 
-# Move output
-OUTPUT=$(ls "$WORK_DIR"/binary.iso "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/*.iso 2>/dev/null | head -1)
+# Move output (check multiple locations since lb_source cleanup may move/delete it)
+OUTPUT=$(ls "$WORK_DIR"/binary.iso "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/*.iso /tmp/henzos-saved.iso 2>/dev/null | head -1)
 if [[ -n "$OUTPUT" ]]; then
   mv "$OUTPUT" "$ISO_DIR/henzos-${ARCH}-$(date +%Y%m%d).iso"
   echo ""
