@@ -239,9 +239,16 @@ fc-cache -f
 HOOKEOF
 chmod +x config/hooks/live/02-fonts.hook.chroot
 
+# Patch lb_source to no-op (it fails on Ubuntu 24.04 and cleans up binary.iso)
+LB_SOURCE="/usr/lib/live/build/lb_source"
+if [ -f "$LB_SOURCE" ]; then
+  cp "$LB_SOURCE" "${LB_SOURCE}.bak"
+  printf '#!/bin/sh\nexit 0\n' > "$LB_SOURCE"
+fi
+
 # --- Build ---
 echo "=> Running lb build (this requires root)..."
-lb build || true
+lb build
 
 # Move output
 OUTPUT=$(ls "$WORK_DIR"/binary.iso "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/*.iso 2>/dev/null | head -1)
