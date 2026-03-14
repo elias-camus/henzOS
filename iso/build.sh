@@ -36,8 +36,6 @@ lb config \
 
 # Patch lb_binary_syslinux to create a minimal isolinux dir without needing
 # syslinux-themes-ubuntu-oneiric or gfxboot-theme-ubuntu (removed in 24.04).
-# The script is replaced with one that sets up a bare-minimum isolinux config
-# so that genisoimage can find the boot catalog directory.
 LB_SYSLINUX="/usr/lib/live/build/lb_binary_syslinux"
 if [ -f "$LB_SYSLINUX" ]; then
   cp "$LB_SYSLINUX" "${LB_SYSLINUX}.bak"
@@ -239,32 +237,20 @@ fc-cache -f
 HOOKEOF
 chmod +x config/hooks/live/02-fonts.hook.chroot
 
-# Patch lb_source and related scripts to no-op (lb_source fails on Ubuntu 24.04)
-for f in /usr/lib/live/build/lb_source*; do
-  if [ -f "$f" ]; then
-    echo "=> Patching $f to no-op"
-    printf '#!/bin/sh\nexit 0\n' > "$f"
-  fi
-done
+# --- Build (run each step individually, skip lb source) ---
+echo "=> Running lb bootstrap..."
+lb bootstrap
 
-# Also add a binary hook that copies the ISO to a safe location before lb_source runs
-mkdir -p config/hooks/live
-cat > config/hooks/live/99-save-iso.hook.binary << 'HOOKEOF'
-#!/bin/sh
-# Save the ISO before lb_source potentially cleans it up
-if [ -f binary.iso ]; then
-  cp binary.iso /tmp/henzos-saved.iso
-  echo "=> Saved binary.iso to /tmp/henzos-saved.iso"
-fi
-HOOKEOF
-chmod +x config/hooks/live/99-save-iso.hook.binary
+echo "=> Running lb chroot..."
+lb chroot
 
-# --- Build ---
-echo "=> Running lb build (this requires root)..."
-lb build || true
+echo "=> Running lb binary..."
+lb binary
 
-# Move output (check multiple locations since lb_source cleanup may move/delete it)
-OUTPUT=$(ls "$WORK_DIR"/binary.iso "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/*.iso /tmp/henzos-saved.iso 2>/dev/null | head -1)
+echo "=> Skipping lb source (not needed, fails on Ubuntu 24.04)"
+
+# Move output
+OUTPUT=$(ls "$WORK_DIR"/binary.iso "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/*.iso 2>/dev/null | head -1)
 if [[ -n "$OUTPUT" ]]; then
   mv "$OUTPUT" "$ISO_DIR/henzos-${ARCH}-$(date +%Y%m%d).iso"
   echo ""
