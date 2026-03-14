@@ -250,7 +250,15 @@ lb binary
 echo "=> Skipping lb source (not needed, fails on Ubuntu 24.04)"
 
 # Move output
-OUTPUT=$(ls "$WORK_DIR"/binary.iso "$WORK_DIR"/*.hybrid.iso "$WORK_DIR"/*.iso 2>/dev/null | head -1)
+echo "=> Looking for ISO in $WORK_DIR..."
+ls -la "$WORK_DIR"/*.iso "$WORK_DIR"/binary.iso 2>/dev/null || true
+OUTPUT=""
+for f in "$WORK_DIR"/binary.iso "$WORK_DIR"/*.iso; do
+  if [ -f "$f" ]; then
+    OUTPUT="$f"
+    break
+  fi
+done
 if [[ -n "$OUTPUT" ]]; then
   mv "$OUTPUT" "$ISO_DIR/henzos-${ARCH}-$(date +%Y%m%d).iso"
   echo ""
