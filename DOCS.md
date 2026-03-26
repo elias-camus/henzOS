@@ -187,6 +187,24 @@ git tag v1.x.x && git push --tags
 - [ ] LightDM greeter のブランディング（ロゴ、背景色）
 - [ ] テーマ追加: catppuccin, nord, gruvbox 等
 
+### フェーズ 3.5 — インストーラー（Calamares）
+
+Live ISO から実機にインストールできるようにする。Calamares は YAML 設定ベースのグラフィカルインストーラーで、Manjaro・KDE Neon 等が採用している。
+
+- [ ] Calamares をパッケージリストに追加 (`iso/build.sh`)
+- [ ] `iso/calamares/` に設定ファイルを追加
+  - `settings.conf` — モジュール順序の定義
+  - `modules/partition.conf` — パーティション設定
+  - `modules/locale.conf` — ロケール・タイムゾーン
+  - `modules/users.conf` — ユーザー作成
+  - `modules/bootloader.conf` — GRUB インストール
+  - `modules/branding/` — henzOS ロゴ・カラー
+- [ ] Live 環境に「インストール」ランチャーを追加（デスクトップ or rofi）
+- [ ] インストール後に `install.sh` が自動実行されるよう `finished.conf` に追記
+- [ ] インストール完了→再起動→LightDM で起動することを確認
+
+> **注意**: `install.sh`（dotfile デプロイ）とは別レイヤー。Calamares は OS をディスクに書き込む役割、`install.sh` はその後の環境セットアップを担う。
+
 ### フェーズ 4 — 配布・ブランディング
 
 - [ ] GitHub リポジトリを公開
