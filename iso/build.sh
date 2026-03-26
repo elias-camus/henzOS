@@ -34,6 +34,12 @@ lb config \
   --binary-images iso \
   --source false
 
+# Patch lb_binary_iso to allow squashfs >4GB (needed for arm64 builds)
+LB_ISO="/usr/lib/live/build/lb_binary_iso"
+if [ -f "$LB_ISO" ]; then
+  sed -i 's/GENISOIMAGE_OPTIONS="-J -l -cache-inodes -allow-multidot"/GENISOIMAGE_OPTIONS="-J -l -cache-inodes -allow-multidot -allow-limited-size"/' "$LB_ISO"
+fi
+
 # Patch lb_binary_syslinux to create a minimal isolinux dir without needing
 # syslinux-themes-ubuntu-oneiric or gfxboot-theme-ubuntu (removed in 24.04).
 LB_SYSLINUX="/usr/lib/live/build/lb_binary_syslinux"
@@ -54,17 +60,73 @@ for f in /usr/lib/ISOLINUX/isolinux.bin /usr/lib/syslinux/modules/bios/ldlinux.c
   [ -f "$f" ] && cp "$f" "$ISOLINUX_DIR/"
 done
 
-# Minimal config
-cat > "$ISOLINUX_DIR/isolinux.cfg" << 'CFG'
+# Detect actual kernel/initrd filenames in casper/ (live-build uses versioned names)
+KERNEL=$(ls binary/casper/vmlinuz* 2>/dev/null | head -1 | sed 's|binary/||')
+INITRD=$(ls binary/casper/initrd* 2>/dev/null | head -1 | sed 's|binary/||')
+KERNEL=${KERNEL:-casper/vmlinuz}
+INITRD=${INITRD:-casper/initrd}
+
+cat > "$ISOLINUX_DIR/isolinux.cfg" << CFG
 DEFAULT live
 LABEL live
-  KERNEL /casper/vmlinuz
-  INITRD /casper/initrd
+  KERNEL /$KERNEL
+  INITRD /$INITRD
   APPEND boot=casper quiet splash ---
 CFG
 SYSEOF
   chmod +x "$LB_SYSLINUX"
 fi
+
+# --- Binary hook: GRUB EFI for UEFI booting (x86_64 + arm64) ---
+# NOTE: live-build looks for binary hooks in config/hooks/*.binary (not config/hooks/live/)
+mkdir -p config/hooks
+cat > config/hooks/03-grub-efi.binary << 'HOOKEOF'
+#!/bin/bash
+set -e
+
+ARCH=$(dpkg --print-architecture)
+if [ "$ARCH" = "amd64" ]; then
+  EFI_PKG="grub-efi-amd64-bin"
+  EFI_FORMAT="x86_64-efi"
+  EFI_FILE="BOOTX64.EFI"
+else
+  EFI_PKG="grub-efi-arm64-bin"
+  EFI_FORMAT="arm64-efi"
+  EFI_FILE="BOOTAA64.EFI"
+fi
+
+apt-get install -y -qq "$EFI_PKG" 2>/dev/null || true
+
+# Detect actual kernel/initrd filenames
+KERNEL=$(ls binary/casper/vmlinuz* 2>/dev/null | head -1 | sed 's|binary/||')
+INITRD=$(ls binary/casper/initrd* 2>/dev/null | head -1 | sed 's|binary/||')
+KERNEL=${KERNEL:-casper/vmlinuz}
+INITRD=${INITRD:-casper/initrd}
+
+# Create grub.cfg
+mkdir -p binary/boot/grub
+cat > binary/boot/grub/grub.cfg << GRUBCFG
+set default=0
+set timeout=5
+
+search --no-floppy --label --set=root henzOS
+
+menuentry "henzOS Live" {
+  linux /$KERNEL boot=casper quiet splash ---
+  initrd /$INITRD
+}
+GRUBCFG
+
+# Create EFI/BOOT/<EFI_FILE> (standalone grub image with embedded config)
+mkdir -p binary/EFI/BOOT
+grub-mkstandalone \
+  --format="$EFI_FORMAT" \
+  --output="binary/EFI/BOOT/$EFI_FILE" \
+  --locales="" \
+  --fonts="" \
+  "boot/grub/grub.cfg=binary/boot/grub/grub.cfg"
+HOOKEOF
+chmod +x config/hooks/03-grub-efi.binary
 
 # --- Package list ---
 mkdir -p config/package-lists

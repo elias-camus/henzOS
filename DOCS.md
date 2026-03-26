@@ -106,30 +106,55 @@ i3 config を例にした読み込み順:
 
 ## ISO ビルド
 
-Ubuntu 24.04 LTS ベースの ISO を live-build で生成する。ビルドは GitHub Actions (x86_64) で自動化されている。
+Ubuntu 24.04 LTS ベースの ISO を live-build で生成する。
 
-### GitHub Actions（推奨）
+### 推奨ワークフロー（Lightsail + UTM）
 
-**手動ビルド（テスト用）:**
+**開発・動作確認フロー:**
+1. AWS Lightsail (ap-northeast-1) に Ubuntu インスタンスを立てる
+2. `build.sh` を実行して ISO をビルド（約 11 分）
+3. rsync でローカルに転送
+4. Lightsail インスタンスを削除
+5. UTM（仮想化モード）で起動確認
+
+**arm64 ビルド（M1/M2/M3/M4/M5 Mac + UTM 仮想化で検証）:**
 ```bash
-gh workflow run "Build henzOS ISO"
+# Lightsail arm64 インスタンスでビルド
+aws lightsail create-instances \
+  --instance-names "henzos-build" \
+  --availability-zone "ap-northeast-1a" \
+  --blueprint-id "ubuntu_24_04" \
+  --bundle-id "medium_3_0" \
+  --region ap-northeast-1
+
+# SSH してビルド
+ssh ubuntu@<IP> "sudo apt-get install -y live-build rsync git xorriso && \
+  git clone https://github.com/elias-camus/henzOS.git ~/henzOS && \
+  nohup sudo bash ~/henzOS/iso/build.sh > /tmp/build.log 2>&1 &"
+
+# ダウンロード（rsync でレジューム可能）
+rsync -av --partial -e "ssh -i <key>" ubuntu@<IP>:~/henzOS/iso/henzos-arm64-*.iso ~/Downloads/
+
+# インスタンス削除
+aws lightsail delete-instance --instance-name henzos-build --region ap-northeast-1
 ```
-完成した ISO は GitHub Actions の Artifacts から 7 日間ダウンロード可能。
+
+UTM で起動する際は **「仮想化」モード・UEFI 有効** を選択。
+
+**x86_64 ビルド（実機検証用）:**
+```bash
+# bundle-id を同じく medium_3_0 で作成（x86_64 インスタンス）
+# blueprint: ubuntu_24_04 on x86_64 node
+```
+UTM で起動する際は **「エミュレート」モード・UEFI オフ（BIOS）・CD/DVD ドライブ** で接続。
+
+### GitHub Actions（リリース用）
 
 **リリースビルド:**
 ```bash
 git tag v1.x.x && git push --tags
 ```
-自動で ISO をビルドし GitHub Release に添付される。
-
-### ローカルビルド（x86_64 Linux のみ）
-
-```bash
-sudo apt-get install live-build rsync
-cd iso/ && sudo bash build.sh
-```
-
-出力: `iso/henzos-amd64-YYYYMMDD.iso`
+自動で x86_64 ISO をビルドし GitHub Release に添付される。
 
 ### ISO の構成
 
@@ -152,8 +177,9 @@ cd iso/ && sudo bash build.sh
 
 - [x] GitHub Actions で x86_64 ISO の自動ビルド CI/CD を構築
 - [x] ISO ビルド成功（2.3 GB、約 11 分）
-- [ ] **ISO からブートして LightDM・i3wm が正常に起動するか確認** ← 次のステップ
-- [ ] ライブ環境で各アプリが動作するか確認
+- [x] ISO からブートして LightDM・i3wm が正常に起動するか確認（x86_64 / UTM エミュレーション）
+- [x] ライブ環境で各アプリが動作するか確認（Polybar・Alacritty 起動確認済み）
+- [x] arm64 ISO ビルド + UTM 仮想化での起動確認
 
 ### フェーズ 3 — コンテンツ
 
